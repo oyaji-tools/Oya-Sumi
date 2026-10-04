@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ja" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>お昼寝タイマー</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        night: {
+                            900: '#0B0F19',
+                            800: '#111827',
+                            700: '#1F2937',
+                            600: '#374151',
+                            accent: '#6366F1',
+                            teal: '#14B8A6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", sans-serif;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .time-display {
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+</head>
+<body class="bg-night-900 text-slate-100 min-h-screen flex flex-col justify-between p-4 max-w-md mx-auto relative select-none">
+
+    <header class="text-center pt-4 pb-2">
+        <h1 class="text-2xl font-bold tracking-wide flex items-center justify-center gap-2 text-indigo-300">
+            <span>🌙</span> 快眠お昼寝タイマー
+        </h1>
+        <p class="text-xs text-slate-400 mt-1">すっきり目覚めるパワーナップ習慣</p>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-1 flex flex-col justify-center my-auto space-y-6">
+
+        <section class="bg-night-800/80 backdrop-blur border border-slate-800 rounded-3xl p-6 text-center shadow-xl">
+            <!-- 状態ラベル -->
+            <div id="statusLabel" class="text-sm font-medium text-slate-400 mb-2">時間をセットしてください</div>
+
+            <!-- 時間表示 -->
+            <div id="timeDisplay" class="time-display text-6xl font-extrabold tracking-tight text-white my-4">
+                15:00
+            </div>
+
+            <!-- 進行プログレスバー -->
+            <div class="w-full bg-slate-700/50 rounded-full h-2 overflow-hidden mb-6">
+                <div id="progressBar" class="bg-indigo-500 h-full w-full transition-all duration-300 ease-linear"></div>
+            </div>
+
+            <!-- 操作ボタン群 -->
+            <div class="flex justify-center gap-3">
+                <button id="startBtn" class="flex-1 bg-indigo-600 active:bg-indigo-700 text-white font-bold py-3 px-6 rounded-2xl shadow-lg transition active:scale-95 text-lg">
+                    開始
+                </button>
+                <button id="pauseBtn" class="hidden flex-1 bg-amber-600 active:bg-amber-700 text-white font-bold py-3 px-6 rounded-2xl shadow-lg transition active:scale-95 text-lg">
+                    一時停止
+                </button>
+                <button id="resetBtn" class="bg-slate-700 active:bg-slate-600 text-slate-200 font-semibold py-3 px-5 rounded-2xl transition active:scale-95">
+                    リセット
+                </button>
+            </div>
+        </section>
+
+        <section id="presetSection" class="space-y-3">
+            <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-wider px-1">時間の選択</h2>
+            <div class="grid grid-cols-4 gap-2">
+                <button onclick="setTimerMinutes(10)" class="preset-btn bg-night-800 hover:bg-slate-700/80 border border-slate-700 py-3 rounded-2xl text-center transition active:scale-95">
+                    <span class="block text-lg font-bold text-white">10</span>
+                    <span class="text-[10px] text-slate-400">分</span>
+                </button>
+                <button onclick="setTimerMinutes(15)" class="preset-btn bg-night-800 hover:bg-slate-700/80 border border-indigo-500/50 bg-indigo-950/20 py-3 rounded-2xl text-center transition active:scale-95">
+                    <span class="block text-lg font-bold text-indigo-300">15</span>
+                    <span class="text-[10px] text-slate-400">分（推奨）</span>
+                </button>
+                <button onclick="setTimerMinutes(20)" class="preset-btn bg-night-800 hover:bg-slate-700/80 border border-slate-700 py-3 rounded-2xl text-center transition active:scale-95">
+                    <span class="block text-lg font-bold text-white">20</span>
+                    <span class="text-[10px] text-slate-400">分</span>
+                </button>
+                <button onclick="setTimerMinutes(30)" class="preset-btn bg-night-800 hover:bg-slate-700/80 border border-slate-700 py-3 rounded-2xl text-center transition active:scale-95">
+                    <span class="block text-lg font-bold text-white">30</span>
+                    <span class="text-[10px] text-slate-400">分</span>
+                </button>
+            </div>
+
+            <!-- カスタム入力 -->
+            <div class="flex items-center gap-2 bg-night-800 border border-slate-800 rounded-2xl p-2 px-4 mt-2">
+                <label for="customMinutes" class="text-xs text-slate-400 whitespace-nowrap">自由設定:</label>
+                <input type="number" id="customMinutes" min="1" max="90" value="15" class="bg-transparent text-white font-bold text-center w-full focus:outline-none text-base" placeholder="分">
+                <span class="text-xs text-slate-400">分</span>
+                <button id="setCustomBtn" class="bg-slate-700 text-xs text-slate-200 px-3 py-1.5 rounded-xl whitespace-nowrap active:bg-slate-600">設定</button>
+            </div>
+        </section>
+
+        <section class="bg-night-800/50 border border-slate-800 rounded-2xl p-4">
+            <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">睡眠用バックグラウンド音</h2>
+            <div class="grid grid-cols-3 gap-2">
+                <button id="soundNone" onclick="setBgSound('none')" class="sound-btn bg-indigo-600 text-white border border-transparent py-2 px-2 rounded-xl text-xs font-medium text-center transition">
+                    無音
+                </button>
+                <button id="soundRain" onclick="setBgSound('rain')" class="sound-btn bg-night-800 text-slate-300 border border-slate-700 py-2 px-2 rounded-xl text-xs font-medium text-center transition">
+                    🌧️ 雨の音
+                </button>
+                <button id="soundNoise" onclick="setBgSound('noise')" class="sound-btn bg-night-800 text-slate-300 border border-slate-700 py-2 px-2 rounded-xl text-xs font-medium text-center transition">
+                    📻 雑音（ノイズ）
+                </button>
+            </div>
+        </section>
+
+        <section class="bg-night-800/30 border border-slate-800/80 rounded-2xl p-4 text-slate-300 space-y-2">
+            <h2 class="text-xs font-bold text-indigo-300 flex items-center gap-1">
+                💡 効果的なお昼寝（パワーナップ）のコツ
+            </h2>
+            <ul class="text-xs space-y-1.5 text-slate-400 pl-4 list-disc">
+                <li><strong class="text-slate-200">寝る直前にカフェインを摂取:</strong> 起きる頃（約20分後）に覚醒効果が現れてすっきり目覚められます。</li>
+                <li><strong class="text-slate-200">時間は20分以内に:</strong> 30分以上寝ると深い睡眠に入り、かえって体が重くなります。</li>
+                <li><strong class="text-slate-200">横にならずに抱き枕や机で:</strong> 横になると深い眠りに入りやすくなるため、少し体を起こした姿勢が理想的です。</li>
+                <li><strong class="text-slate-200">部屋を暗くする:</strong> アイマスクを活用するか、光を遮ると短時間でも質の高い休息になります。</li>
+            </ul>
+        </section>
+
+    </main>
+
+    <footer class="text-center py-2 text-[10px] text-slate-500">
+        画面をOFF（スリープ）にするとタイマーが停止する場合があります。画面を開いたままご利用ください。
+    </footer>
+
+    <div id="alarmModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6 z-50 animate-fade-in">
+        <div class="text-center space-y-6">
+            <div class="text-6xl animate-bounce">⏰</div>
+            <h2 class="text-3xl font-extrabold text-white">お時間です！</h2>
+            <p class="text-slate-300 text-sm">すっきりと目覚めて午後も頑張りましょう。</p>
+            <button id="stopAlarmBtn" class="w-full max-w-xs bg-emerald-500 active:bg-emerald-600 text-white text-lg font-bold py-4 px-8 rounded-full shadow-2xl transition active:scale-95">
+                アラームを止める
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- 状態管理 ---
+        let totalSeconds = 15 * 60;
+        let remainingSeconds = 15 * 60;
+        let timerInterval = null;
+        let isRunning = false;
+        let selectedBgSound = 'none'; // 'none', 'rain', 'noise'
+
+        // Web Audio API 関連
+        let audioCtx = null;
+        let bgSoundNode = null;
+        let alarmIntervalNode = null;
+
+        // DOM要素
+        const timeDisplay = document.getElementById('timeDisplay');
+        const progressBar = document.getElementById('progressBar');
+        const statusLabel = document.getElementById('statusLabel');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const customMinutesInput = document.getElementById('customMinutes');
+        const setCustomBtn = document.getElementById('setCustomBtn');
+        const alarmModal = document.getElementById('alarmModal');
+        const stopAlarmBtn = document.getElementById('stopAlarmBtn');
+
+        // --- Web Audio API 初期化 ---
+        function initAudioContext() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // --- タイマー表示更新 ---
+        function updateDisplay() {
+            const minutes = Math.floor(remainingSeconds / 60);
+            const seconds = remainingSeconds % 60;
+            timeDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            
+            // プログレスバー更新
+            const percentage = totalSeconds > 0 ? (remainingSeconds / totalSeconds) * 100 : 0;
+            progressBar.style.width = `${percentage}%`;
+        }
+
+        // --- 分数セット ---
+        function setTimerMinutes(mins) {
+            if (isRunning) pauseTimer();
+            totalSeconds = Math.max(1, Math.min(180, mins)) * 60;
+            remainingSeconds = totalSeconds;
+            customMinutesInput.value = mins;
+            statusLabel.textContent = `${mins}分にセットしました`;
+            updateDisplay();
+        }
+
+        setCustomBtn.addEventListener('click', () => {
+            const val = parseInt(customMinutesInput.value, 10);
+            if (!isNaN(val) && val > 0) {
+                setTimerMinutes(val);
+            }
+        });
+
+        // --- タイマー制御 ---
+        function startTimer() {
+            initAudioContext();
+            if (isRunning) return;
+
+            if (remainingSeconds <= 0) {
+                remainingSeconds = totalSeconds;
+            }
+
+            isRunning = true;
+            startBtn.classList.add('hidden');
+            pauseBtn.classList.remove('hidden');
+            statusLabel.textContent = "お昼寝中...";
+
+            // 背景音の再生スタート
+            playBgSound();
+
+            timerInterval = setInterval(() => {
+                remainingSeconds--;
+                updateDisplay();
+
+                if (remainingSeconds <= 0) {
+                    finishTimer();
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            pauseBtn.classList.add('hidden');
+            startBtn.classList.remove('hidden');
+            statusLabel.textContent = "一時停止中";
+            stopBgSound();
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            remainingSeconds = totalSeconds;
+            statusLabel.textContent = "時間をセットしてください";
+            updateDisplay();
+        }
+
+        function finishTimer() {
+            pauseTimer();
+            statusLabel.textContent = "お時間です！";
+            stopBgSound();
+            triggerAlarm();
+        }
+
+        startBtn.addEventListener('click', startTimer);
+        pauseBtn.addEventListener('click', pauseTimer);
+        resetBtn.addEventListener('click', resetTimer);
+
+        // --- 環境音（ホワイトノイズ / 雨の音）合成処理 ---
+        function setBgSound(type) {
+            selectedBgSound = type;
+            
+            // ボタンの選択状態UI更新
+            document.querySelectorAll('.sound-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('bg-night-800', 'text-slate-300');
+            });
+
+            const activeBtnMap = {
+                'none': 'soundNone',
+                'rain': 'soundRain',
+                'noise': 'soundNoise'
+            };
+            const activeBtn = document.getElementById(activeBtnMap[type]);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-night-800', 'text-slate-300');
+                activeBtn.classList.add('bg-indigo-600', 'text-white');
+            }
+
+            if (isRunning) {
+                stopBgSound();
+                playBgSound();
+            }
+        }
+
+        function playBgSound() {
+            if (selectedBgSound === 'none') return;
+            initAudioContext();
+
+            const bufferSize = audioCtx.sampleRate * 2;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+
+            if (selectedBgSound === 'noise') {
+                // ピンク/ホワイトノイズ（ソフトな音）
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * 0.05;
+                }
+            } else if (selectedBgSound === 'rain') {
+                // 雨のようなフィルター調整用ノイズ
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * 0.08;
+                }
+            }
+
+            const noiseSource = audioCtx.createBufferSource();
+            noiseSource.buffer = buffer;
+            noiseSource.loop = true;
+
+            // ローパスフィルターで角を取って優しい音にする
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = selectedBgSound === 'rain' ? 'lowpass' : 'bandpass';
+            filter.frequency.value = selectedBgSound === 'rain' ? 800 : 500;
+
+            const gainNode = audioCtx.createGain();
+            gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+
+            noiseSource.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            noiseSource.start();
+            bgSoundNode = { source: noiseSource, gain: gainNode };
+        }
+
+        function stopBgSound() {
+            if (bgSoundNode) {
+                try {
+                    bgSoundNode.gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+                    setTimeout(() => {
+                        bgSoundNode.source.stop();
+                        bgSoundNode = null;
+                    }, 500);
+                } catch (e) {
+                    bgSoundNode = null;
+                }
+            }
+        }
+
+        // --- 目覚ましアラーム音（優しいチャイム合成） ---
+        function triggerAlarm() {
+            initAudioContext();
+            
+            // モーダル表示
+            alarmModal.classList.remove('hidden');
+
+            // バイブレーション（対応端末のみ）
+            if ("vibrate" in navigator) {
+                navigator.vibrate([500, 300, 500, 300, 500, 300, 1000]);
+            }
+
+            // チャイム音生成関数
+            const playChime = () => {
+                if (!alarmModal.classList.contains('hidden')) {
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 (ド・ミ・ソ・ド)
+                    notes.forEach((freq, idx) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+
+                        osc.type = 'sine';
+                        osc.frequency.value = freq;
+
+                        const startTime = audioCtx.currentTime + (idx * 0.15);
+                        gain.gain.setValueAtTime(0, startTime);
+                        gain.gain.linearRampToValueAtTime(0.2, startTime + 0.05);
+                        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 1.2);
+
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+
+                        osc.start(startTime);
+                        osc.stop(startTime + 1.2);
+                    });
+                }
+            };
+
+            // アラームループ
+            playChime();
+            alarmIntervalNode = setInterval(playChime, 2000);
+        }
+
+        function stopAlarm() {
+            alarmModal.classList.add('hidden');
+            if (alarmIntervalNode) {
+                clearInterval(alarmIntervalNode);
+                alarmIntervalNode = null;
+            }
+            if ("vibrate" in navigator) {
+                navigator.vibrate(0); // バイブ停止
+            }
+            resetTimer();
+        }
+
+        stopAlarmBtn.addEventListener('click', stopAlarm);
+
+        // 初期化
+        updateDisplay();
+    </script>
+</body>
+</html>
