@@ -275,30 +275,31 @@
 
         // --- 環境音（ホワイトノイズ / 雨の音）合成処理 ---
         function setBgSound(type) {
-            selectedBgSound = type;
-            
-            // ボタンの選択状態UI更新
-            document.querySelectorAll('.sound-btn').forEach(btn => {
-                btn.classList.remove('bg-indigo-600', 'text-white');
-                btn.classList.add('bg-night-800', 'text-slate-300');
-            });
+    selectedBgSound = type;
+    
+    // ボタンの選択状態UI更新
+    document.querySelectorAll('.sound-btn').forEach(btn => {
+        btn.classList.remove('bg-indigo-600', 'text-white');
+        btn.classList.add('bg-night-800', 'text-slate-300');
+    });
 
-            const activeBtnMap = {
-                'none': 'soundNone',
-                'rain': 'soundRain',
-                'noise': 'soundNoise'
-            };
-            const activeBtn = document.getElementById(activeBtnMap[type]);
-            if (activeBtn) {
-                activeBtn.classList.remove('bg-night-800', 'text-slate-300');
-                activeBtn.classList.add('bg-indigo-600', 'text-white');
-            }
+    const activeBtnMap = {
+        'none': 'soundNone',
+        'rain': 'soundRain',
+        'noise': 'soundNoise'
+    };
+    const activeBtn = document.getElementById(activeBtnMap[type]);
+    if (activeBtn) {
+        activeBtn.classList.remove('bg-night-800', 'text-slate-300');
+        activeBtn.classList.add('bg-indigo-600', 'text-white');
+    }
 
-            if (isRunning) {
-                stopBgSound();
-                playBgSound();
-            }
-        }
+    // タイマーの動作状況に関わらず、一旦音を止めてから選んだ音を再生する
+    stopBgSound();
+    if (selectedBgSound !== 'none') {
+        playBgSound();
+    }
+}
 
         function playBgSound() {
             if (selectedBgSound === 'none') return;
